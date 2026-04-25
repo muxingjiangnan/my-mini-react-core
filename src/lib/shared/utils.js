@@ -1,5 +1,3 @@
-// 存放工具方法的文件
-
 /**
  * 对 fiber 对象要做的操作进行的标记
  */
@@ -13,8 +11,8 @@ export const Update = 0b0000000000000000000100; // 4
 // 删除节点
 export const Deletion = 0b0000000000000000001000; // 8
 // 副作用相关 flags
-export const Passive = 0b0000000000000000010000; // 16 - useEffect
-export const Layout = 0b0000000000000000100000; // 32 - useLayoutEffect
+export const Passive = 0b0000000000000000010000; // 16   useEffect
+export const Layout = 0b0000000000000000100000; // 32   useLayoutEffect
 
 /**
  * 判断参数 s 是否为字符串
@@ -49,6 +47,7 @@ export function isUndefined(s) {
  * @returns
  */
 export function isArray(arr) {
+	// 这个 API 是通过 C++ 来判断数据的数据结构的，所以这个原生 API 就是最合适的 API
 	return Array.isArray(arr);
 }
 
@@ -128,4 +127,3 @@ export const getCurrentTime = () =>
 	typeof performance === "object" && performance.now
 		? performance.now()
 		: Date.now();
-
