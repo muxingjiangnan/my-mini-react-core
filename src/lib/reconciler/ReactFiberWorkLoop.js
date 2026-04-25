@@ -4,18 +4,18 @@ import completeWork from "./ReactFiberCompleteWork";
 import commitWorker from "./ReactFiberCommitWork";
 import scheduleCallback, { shouldYieldToHost } from "../scheduler/Scheduler";
 
-// wip 的英语全称为 work in progress，表示正在进行的工作
-// 我们使用这个变量来保存当前正在进行的工作 fiber 对象
+// wip 的全称为 work in progress，表示正在进行的工作
+// 用这个变量来保存当前正在进行的工作 fiber 对象
 let wip = null;
 
-// 从名字上也可以看出，这是保存当前根节点的 fiber 对象
+// 从命名可以看出，这是保存当前根节点的 fiber 对象
 let wipRoot = null;
 
 function scheduleUpdateOnFiber(fiber) {
   wip = fiber;
   wipRoot = fiber;
 
-  // 目前我们先使用 requestIdleCallback 来进行调用
+  // 目前先使用 requestIdleCallback 来进行调用
   // 后期使用 scheduler 包来进行调用
   // 当浏览器的每一帧有空闲时间的时候，就会执行 workloop 函数
   // requestIdleCallback(workloop);

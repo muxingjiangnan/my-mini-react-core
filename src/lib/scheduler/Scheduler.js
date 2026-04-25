@@ -1,27 +1,21 @@
 /**
- * 该文件就是调度器的具体实现
+ * 该模块就是调度器的具体实现
  */
 
 import { push, pop, peek } from "./SchedulerMinHeap";
 import { getCurrentTime } from "../shared/utils";
-
 // 任务队列
 const taskQueue = [];
-
 // 任务 id 计数器
 let taskIdCounter = 1;
-
 // 时间片限制：5ms
 const frameInterval = 5;
-
 // 记录任务开始时间
 let startTime = -1;
-
 // 通过 MessageChannel 来模拟浏览器的 requestIdleCallback
 const { port1, port2 } = new MessageChannel();
-
 /**
- * 判断是否应该让出主线程
+ * 判断是否应该让出浏览器的渲染主线程
  * @returns {boolean} 如果超过 5ms 返回 true
  */
 export function shouldYieldToHost() {
