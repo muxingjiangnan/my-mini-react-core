@@ -70,34 +70,27 @@ function workloop() {
  * 4. 进行渲染
  */
 function performUnitOfWork() {
-  beginWork(wip); // 处理当前的 fiber 对象
+  beginWork(wip); // 处理当前的 fiber 节点
 
-  // 如果有子节点，将 wip 更新为子节点
   if (wip.child) {
+    // 如果有子节点，将 wip 往下走
     wip = wip.child;
     return;
   }
 
-  completeWork(wip);
+  completeWork(wip);    // 没有子节点，完成当前节点
 
-  // 如果没有子节点，就需要找到兄弟节点
   let next = wip; // 先缓存一下当前的 wip
   while (next) {
     if (next.sibling) {
       wip = next.sibling;
       return;
     }
-
-    // 如果没有进入上面的 if，说明当前节点后面已经没有兄弟节点了
-    // 那么就需要将父节点设置为当前正在工作的节点，然后在父亲那一层继续寻找兄弟节点
-    next = next.return;
-
-    // 在寻找父亲那一辈的兄弟节点之前，先执行一下 completeWork 方法
-    completeWork(next);
+    next = next.return;   // 没兄弟？往上回溯到父节点
+    completeWork(next);   // 父节点也完成
   }
 
-  // 如果执行到这里，说明整个 fiber 树都处理完了
-  // 没有节点需要处理了
+  // 整棵 fiber 树遍历完毕
   wip = null;
 }
 

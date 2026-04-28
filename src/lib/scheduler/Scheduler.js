@@ -14,6 +14,7 @@ const frameInterval = 5;
 let startTime = -1;
 // 通过 MessageChannel 来模拟浏览器的 requestIdleCallback
 const { port1, port2 } = new MessageChannel();
+
 /**
  * 判断是否应该让出浏览器的渲染主线程
  * @returns {boolean} 如果超过 5ms 返回 true
@@ -70,10 +71,10 @@ port2.onmessage = function () {
     // 没有进入到上面的 if，说明当前的任务是需要执行的
     const callback = currentTask.callback;
     currentTask.callback = null;
-    
+
     // 执行对应的任务，不传时间参数
     const taskResult = callback();
-    
+
     if (taskResult === undefined) {
       // 进入此 if，说明是任务执行完了才退出来的，那么就可以将其从任务队列中删除了
       pop(taskQueue);
