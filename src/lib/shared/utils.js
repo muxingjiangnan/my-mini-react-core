@@ -58,72 +58,62 @@ export function isArray(arr) {
  * @param {*} nextVal 新值
  */
 export const updateNode = (node, prevVal, nextVal) => {
-	// 这里其实要做的事情就分为两个部分：
+	// 两个步骤: 
 	// 1. 对旧值的处理
 	// 2. 对新值的处理
 
-	// 步骤一：对旧值进行处理
+	// 对旧值进行处理
 	Object.keys(prevVal).forEach((k) => {
-		// 拿到的 k 就有不同的情况
 		if (k === "children") {
-			// 这里我们需要判断一下 children 是否是字符串
-			// 如果是字符串，说明是文本节点，我们需要将其设置为空字符串
+			// 这里需要判断一下 children 是否是字符串
+			// 如果是字符串，说明是文本节点，需要将其设置为空字符串
 			if (isStrOrNum(prevVal[k])) {
 				node.textContent = "";
 			}
 		} else if (k.startsWith("on")) {
-			// 说明是绑定的事件
-			// 那么我就需要将你这个旧值移除掉
-
-			// 首先获取到事件名
+			// 事件属性
 			let eventName = k.slice(2).toLowerCase();
-			// 需要注意，如果是 change 事件，那么背后绑定的是 input 事件
-			// 这里我们需要做一下处理
+			// 注意: 如果是 change 事件，其实绑定的是 input 事件
 			if (eventName === "change") {
 				eventName = "input";
 			}
 			// 移除事件
 			node.removeEventListener(eventName, prevVal[k]);
 		} else {
-			// 进入此分支，说明就是普通的属性
-			// 例如 id、className 之类的
-			// 这里不能无脑的直接去除，应该检查一下新值中是否还有这个属性
-			// 如果没有，我们需要将其移除掉
+			// 普通属性，如 id、className，若新值中没有该属性，将其移除
 			if (!(k in nextVal)) {
 				node[k] = "";
 			}
 		}
 	});
-
-	// 步骤二：对新值进行处理，流程基本和上面一样，只不过是反着操作
+	// 对新值进行处理，流程基本和上面一样，只不过是反着操作
 	Object.keys(nextVal).forEach((k) => {
 		if (k === "children") {
-			// 需要判断是否是文本节点
+			// 判断是否是文本节点
 			if (isStrOrNum(nextVal[k])) {
 				node.textContent = nextVal[k];
 			}
 		} else if (k.startsWith("on")) {
-			// 说明是绑定事件
+			// 绑定事件
 			let eventName = k.slice(2).toLowerCase();
-
 			if (eventName === "change") {
 				eventName = "input";
 			}
-
 			node.addEventListener(eventName, nextVal[k]);
 		} else {
-			// 进入此分支，说明是普通的属性
+			// 普通属性
 			node[k] = nextVal[k];
 		}
 	});
-}
+};
 
 /**
  *
  * @returns 返回当前时间
- * 关于 performance API 的说明，可以参阅：https://developer.mozilla.org/zh-CN/docs/Web/API/Performance/now
+ * 关于 performance API 的说明，可以参阅:
+ * https://developer.mozilla.org/zh-CN/docs/Web/API/Performance/now
  */
 export const getCurrentTime = () =>
-	typeof performance === "object" && performance.now
+	typeof performance === "object" && typeof performance.now === "function"
 		? performance.now()
 		: Date.now();

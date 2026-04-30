@@ -13,13 +13,13 @@ import {
  */
 function createFiber(vnode, returnFiber) {
 	const fiber = {
-		// fiber 的类型
+		// 原始 vnode.type
 		type: vnode.type,
 		// key
 		key: vnode.key,
 		// props
 		props: vnode.props,
-		// 存储当前的 fiber 对象所对应的 DOM 节点
+		// 关联的本地状态节点：DOM节点、类实例或null
 		stateNode: null,
 		// 整个 fiber 树是以链表的形式串联起来的，因此需要 child、sibling 之类的
 		// 子 fiber

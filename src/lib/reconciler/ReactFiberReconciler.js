@@ -15,10 +15,7 @@ export function updateHostComponent(wip) {
     // 接下来我们需要更新节点上的属性
     updateNode(wip.stateNode, {}, wip.props);
   }
-  // 到目前为止，说明当前的 fiber 节点所对应的 stateNode 已经有值了，也就是说有对应的 DOM 了
-  // 因此接下来的下一步，我们就应该处理子节点了
   reconcileChildren(wip, wip.props.children);
-  // 上一步执行完毕后，说明已经处理完了所有的子节点 vnode，fiber 的链表也就形成了
 }
 
 /**
@@ -34,16 +31,12 @@ export function updateHostTextComponent(wip) {
  * @param {*} wip 需要处理的 fiber 对象节点
  */
 export function updateFunctionComponent(wip) {
-  // 进入到这里，也就是说，我确定你是一个函数组件
-  // 那么在处理 fiber 树之前，我们先处理 hooks
+  // 重置 Hooks 链表
   renderWithHooks(wip);
-
-  // hooks 处理完了之后，后面就是处理 fiber 树了
   const { type, props } = wip;
-  // 这里从当前的 wip 上面获取到的 type 是一个函数
-  // 那么我们就直接执行这个函数，获取到它的返回值
+  // 执行函数组件，返回 React Element（单个 vnode）
   const children = type(props);
-  // 有了 vnode 节点之后，就调用 reconcileChildren 方法，来处理子节点
+  // 传入 reconcileChildren，内部会统一处理为数组
   reconcileChildren(wip, children);
 }
 
@@ -53,12 +46,10 @@ export function updateFunctionComponent(wip) {
  */
 export function updateClassComponent(wip) {
   const { type, props } = wip;
-  // 这里从当前的 wip 上面获取到的 type 是一个类
-  // 那么我们就 new 一个实例出来
   const instance = new type(props);
-  // 接下来我们就可以调用 render 方法，获取到它的返回值
+  // 调用 render 方法，获取到 vnode
   const children = instance.render();
-  // 有了 vnode 节点之后，就调用 reconcileChildren 方法，来处理子节点
+  // diff 算法处理子节点
   reconcileChildren(wip, children);
 }
 

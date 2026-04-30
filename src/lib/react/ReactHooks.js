@@ -37,8 +37,8 @@ let isBatchingUpdates = false; // 是否正在批处理更新
 let updateQueue = []; // 批处理更新队列
 
 /**
- * 该方法主要是对当前这颗 fiber 以及 hooks 进行一个初始化
- * @param {*} wip 接收一个 fiber 对象
+ * 重置 Hooks 链表
+ * @param {*} wip 当前 fiber 对象
  */
 export function renderWithHooks(wip) {
 	currentlyRenderingFiber = wip;
@@ -46,7 +46,7 @@ export function renderWithHooks(wip) {
 	currentlyRenderingFiber.memorizedState = null;
 	// 将当前正在处理的 hook 置为 null
 	workInProgressHook = null;
-	//存储 effect 对应的副作用函数和依赖项，这节课用不到
+	//存储 effect 对应的副作用函数和依赖项
 	currentlyRenderingFiber.updateQueue = [];
 	// 重置 effect hook 索引
 	EFFECT_HOOK_INDEX = 0;

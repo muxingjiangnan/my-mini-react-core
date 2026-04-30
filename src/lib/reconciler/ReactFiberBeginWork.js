@@ -19,7 +19,6 @@ import {
  */
 function beginWork(wip) {
   const tag = wip.tag;
-
   switch (tag) {
     case HostComponent: {
       updateHostComponent(wip);
