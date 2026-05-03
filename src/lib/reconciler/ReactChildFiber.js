@@ -1,5 +1,5 @@
 import { isStrOrNum, isArray, Update } from "../shared/utils";
-import createFiber from "../reconciler/ReactFiber";
+import createFiber from "./ReactFiber";
 import {
 	sameNode,
 	placeChild,

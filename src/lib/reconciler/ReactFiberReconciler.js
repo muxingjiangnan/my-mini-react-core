@@ -1,6 +1,6 @@
-import { updateNode } from "../shared/utils.js";
-import { reconcileChildren } from "./ReactChildFiber.js";
-import { renderWithHooks } from "../react/ReactHooks.js";
+import { updateNode } from "../shared/utils";
+import { reconcileChildren } from "./ReactChildFiber";
+import { renderWithHooks } from "../react/ReactHooks";
 
 /**
  *
