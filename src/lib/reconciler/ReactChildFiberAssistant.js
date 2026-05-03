@@ -1,5 +1,5 @@
 /**
- * 该文件是一个辅助文件，为 diff 算法提供了一些辅助的方法
+ * 该模块是一个辅助文件，为 diff 算法提供一些辅助方法
  */
 
 import { Placement, Deletion } from "../shared/utils";
@@ -73,27 +73,25 @@ export function linkFiber(returnFiber, lastNewFiber, newFiber) {
 }
 
 /**
- *
+ * 将需要删除的子 fiber 标记在 returnFiber 的 deletions 中
  * @param {*} returnFiber 父 fiber
  * @param {*} childToDelete 需要删除的子 fiber
  */
 export function deleteChild(returnFiber, childToDelete) {
-  // 这里的删除其实仅仅只是标记一下，真正的删除是在 commit 阶段
-  // 将要删除的 fiber 对象放入到到一个数组里面
   childToDelete.flags |= Deletion;
-  const deletions = returnFiber.deletions; // deletions 是一个数组
+  const deletions = returnFiber.deletions;
   if (deletions) {
-    // 如果有这个数组，那么直接 push 进去即可
+    // 有这个数组
     returnFiber.deletions.push(childToDelete);
   } else {
-    // 第一次是没有这个数组的，那么我们就初始化一个数组
-    // 并且将本次要删除的子 fiber 放入进去
+    // 第一次没有这个数组，初始化一个数组
+    // 并且将本次要删除的子 fiber 放进去
     returnFiber.deletions = [childToDelete];
   }
 }
 
 /**
- * 对剩余 oldFiber 记入到 deletions
+ * 删除需要删除的子 fiber（标记）
  * @param {*} returnFiber 父 fiber
  * @param {*} currentFirstChild 第一个旧的、待删除的子 fiber
  */
@@ -106,11 +104,10 @@ export function deleteRemainingChildren(returnFiber, currentFirstChild) {
 }
 
 /**
- * 将旧的子节点构建到一个 map 结构里面
+ * 将旧的子 fiber 构建到一个 map 结构里面
  * @param {*} currentFirstChild 剩下的旧 fiber 头节点
  */
 export function mapRemainingChildren(currentFirstChild) {
-  // 首先第一步肯定是创建一个 map
   const existingChildren = new Map();
   let existingChild = currentFirstChild;
   let index = 0;
