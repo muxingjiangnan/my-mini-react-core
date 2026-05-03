@@ -95,7 +95,7 @@ export function deleteChild(returnFiber, childToDelete) {
 /**
  * 对剩余 oldFiber 记入到 deletions
  * @param {*} returnFiber 父 fiber
- * @param {*} currentFirstChild 旧的第一个待删除的子 fiber
+ * @param {*} currentFirstChild 第一个旧的、待删除的子 fiber
  */
 export function deleteRemainingChildren(returnFiber, currentFirstChild) {
   let childToDelete = currentFirstChild;

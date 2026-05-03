@@ -43,7 +43,7 @@ export function reconcileChildren(returnFiber, children) {
 	//     (2)遍历剩余新节点，用 key (或 type-index )去 Map 中查找可复用的旧节点。
 	//         找到则复用(继承 stateNode 和 alternate )，并且会从 Map 中删除对应的旧节点
 	//      注意: 即使 type + key 相同能复用，仍需要通过 placeChild 判断是否移动位置(标记 flags)。
-	//  5. 清理 Map 中剩余的旧节点，标记为删除，在 commit 阶段统一处理。
+	//  5. 对于 Map 中剩余的旧节点，标记为删除，在 commit 阶段统一处理。
 
 	// 1. 对每一个新 vnode 尝试复用 oldFiber
 	for (; oldFiber && i < normalizedChildren.length; i++) {
@@ -93,48 +93,39 @@ export function reconcileChildren(returnFiber, children) {
 		return;
 	}
 
-	// 3. 接下来就是初次渲染的情况
+	// 3. 初次渲染或旧节点已耗尽
 	if (!oldFiber) {
-		// 那么需要将 normalizedChildren 数组中的每一个元素都生成一个 fiber 对象
-		// 然后将这些 fiber 对象串联起来
+		// 将 normalizedChildren 中的每一个 vnode 都生成一个 fiber 对象，
+		// 然后将这些 fiber 链接到 fiber 链表即可。
 		for (; i < normalizedChildren.length; i++) {
 			const newChildVnode = normalizedChildren[i];
-
-			// 那么这一次就不处理，直接跳到下一次
 			if (newChildVnode === null) continue;
-
-			// 下一步就应该根据 vnode 生成新的 fiber
+			// 根据 vnode 生成新的 fiber
 			const newFiber = createFiber(newChildVnode, returnFiber);
-
-			// 接下来需要去更新 lastPlacedIndex 这个值
+			// 更新 lastPlacedIndex 以及标记 Placement 的 flags
 			lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, i, isUpdate);
-
       // 链接到 fiber 链表
 			linkFiber(returnFiber, lastNewFiber, newFiber);
 		}
 	}
 
-	// 4. 处理新旧节点都还有剩余的情况
-	// 首先需要创建一个 map 结构，用于存储剩余的旧节点
+	// 4. 新旧节点都剩余 —— Map 查找复用
 	const existingChildren = mapRemainingChildren(oldFiber);
-	// 去遍历剩余的新节点
+	// 遍历剩余的新节点
 	for (; i < normalizedChildren.length; i++) {
-		// 先拿到当前的 vnode
+		// 当前的 vnode
 		const newChild = normalizedChildren[i];
 		if (newChild === null) continue;
 
-		// 根据新节点的 vnode 去生成新的 fiber
+		// 根据新 vnode 生成新 fiber
 		const newFiber = createFiber(newChild, returnFiber);
 
-		// 接下来就需要去哈希表里面寻找是否有可以复用的节点
-		// 对于没有 key 的节点，使用与 mapRemainingChildren 相同的逻辑生成 key
+		// 哈希表中寻找可复用的 fiber
+		// 对于没有 key 的 newFiber ，生成特殊 key
 		const key = newFiber.key || `${newFiber.type}-${i}`;
 		const matchedFiber = existingChildren.get(key);
-		// 这里就有两种情况：
-		// 有可能从哈希表里面找到了，也有可能没有找到
 		if (matchedFiber) {
-			// 说明找到了，那么就可以复用
-			// 复用旧 fiber 上面的部分信息，特别是 DOM 节点
+			// 有可复用的 fiber 
 			Object.assign(newFiber, {
 				stateNode: matchedFiber.stateNode,
 				alternate: matchedFiber,
@@ -144,14 +135,14 @@ export function reconcileChildren(returnFiber, children) {
 			existingChildren.delete(key);
 		}
 
-		// 更新 lastPlacedIndex 的值
+		// 更新 lastPlacedIndex
 		lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, i, isUpdate);
 
 		// 链接到 fiber 链表
     linkFiber(returnFiber, lastNewFiber, newFiber);
 	}
 
-	// 5. 整个新节点遍历完成后，如果 map 中还有剩余的旧节点，这些旧节点也就没有用了，直接删除即可
+	// 5. 对于 Map 中剩余的旧节点，标记为删除，在 commit 阶段统一处理。
 	if (isUpdate) {
 		existingChildren.forEach((child) => {
 			deleteChild(returnFiber, child);
