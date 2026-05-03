@@ -2,7 +2,7 @@
  * 该文件是一个辅助文件，为 diff 算法提供了一些辅助的方法
  */
 
-import { Placement } from "../shared/utils";
+import { Placement, Deletion } from "../shared/utils";
 
 /**
  * 判断是否为相同
@@ -80,6 +80,7 @@ export function linkFiber(returnFiber, lastNewFiber, newFiber) {
 export function deleteChild(returnFiber, childToDelete) {
   // 这里的删除其实仅仅只是标记一下，真正的删除是在 commit 阶段
   // 将要删除的 fiber 对象放入到到一个数组里面
+  childToDelete.flags |= Deletion;
   const deletions = returnFiber.deletions; // deletions 是一个数组
   if (deletions) {
     // 如果有这个数组，那么直接 push 进去即可
@@ -92,7 +93,7 @@ export function deleteChild(returnFiber, childToDelete) {
 }
 
 /**
- * 这里涉及到要删除多个节点，删除多个节点的核心思想也就是一个一个去删除
+ * 对剩余 oldFiber 记入到 deletions
  * @param {*} returnFiber 父 fiber
  * @param {*} currentFirstChild 旧的第一个待删除的子 fiber
  */

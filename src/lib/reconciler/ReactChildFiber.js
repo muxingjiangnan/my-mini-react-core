@@ -45,7 +45,7 @@ export function reconcileChildren(returnFiber, children) {
 	//      注意: 即使 type + key 相同能复用，仍需要通过 placeChild 判断是否移动位置(标记 flags)。
 	//  5. 清理 Map 中剩余的旧节点，标记为删除，在 commit 阶段统一处理。
 
-	// 第一轮遍历，尝试复用节点，得有 oldFiber 
+	// 1. 对每一个新 vnode 尝试复用 oldFiber
 	for (; oldFiber && i < normalizedChildren.length; i++) {
 		const newChild = normalizedChildren[i];
 		if (newChild === null) continue;
@@ -88,11 +88,7 @@ export function reconcileChildren(returnFiber, children) {
 	}
 
 	// 2. 检查 normalizedChildren 是否完成了遍历
-	// 从上面的 for 循环出来，有两种情况
-	// 1. oldFiber 为 null，说明是初次渲染
-	// 2. i === normalizedChildren.length，说明是遍历完了出来的
 	if (i === normalizedChildren.length) {
-		// 如果还剩余有旧的 fiber 节点，那么就需要将其删除掉
 		deleteRemainingChildren(returnFiber, oldFiber);
 		return;
 	}

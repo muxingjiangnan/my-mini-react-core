@@ -12,6 +12,17 @@ function getParentDom(wip) {
 	}
 }
 
+function getDeletionDom(fiber) {
+	let node = fiber;
+	while (node) {
+		if (node.stateNode) {
+			return node.stateNode;
+		}
+		node = node.child;
+	}
+	return null;
+}
+
 function commitNode(wip) {
 	// 首先第一步 我们需要获取到当前 fiber 节点的父节点
 	const parentNodeDOM = getParentDom(wip.return);
@@ -31,6 +42,18 @@ function commitWork(wip) {
 	// 2、提交子节点
 	// 3、提交兄弟节点
 	commitNode(wip); // 提交自己
+
+	// 处理 deletions：删除旧 fiber 对应的 DOM
+	if (wip.deletions) {
+		const parentDOM = getParentDom(wip);
+		wip.deletions.forEach(childToDelete => {
+			const dom = getDeletionDom(childToDelete);
+			if (dom && parentDOM) {
+				parentDOM.removeChild(dom);
+			}
+		});
+	}
+
 	commitWork(wip.child); // 提交子节点  (递归调用此方法，因为每个节点都可能有子节点、兄弟节点)
 	commitWork(wip.sibling); // 提交兄弟节点
 }

@@ -24,6 +24,23 @@ function getParentDOM(wip) {
 }
 
 /**
+ * 从被删除的 fiber 树中找到第一个真实 DOM 节点
+ * 被删除的可能是函数组件/类组件（无 stateNode），需要递归往下找
+ * @param {Object} fiber 被删除的 fiber
+ * @returns {Node|null} 真实 DOM 节点
+ */
+function getDeletionDom(fiber) {
+	let node = fiber;
+	while (node) {
+		if (node.stateNode) {
+			return node.stateNode;
+		}
+		node = node.child;
+	}
+	return null;
+}
+
+/**
  * 提交 fiber 节点到 DOM
  * @param {Object} wip 工作中的 fiber 节点
  */
@@ -204,6 +221,18 @@ function commitWorker(wip) {
 	// 3. 提交兄弟节点
 
 	commitNode(wip); // 提交自己
+
+	// 处理 deletions：删除旧 fiber 对应的 DOM
+	if (wip.deletions) {
+		const parentDOM = getParentDOM(wip);
+		wip.deletions.forEach(childToDelete => {
+			const dom = getDeletionDom(childToDelete);
+			if (dom && parentDOM) {
+				parentDOM.removeChild(dom);
+			}
+		});
+	}
+
 	commitWorker(wip.child); // 提交子节点
 	commitWorker(wip.sibling); // 提交兄弟节点
 
