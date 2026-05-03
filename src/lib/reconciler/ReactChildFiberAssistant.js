@@ -17,15 +17,11 @@ export function sameNode(a, b) {
 }
 
 /**
- * 该方法专门用于更新 lastPlacedIndex
+ * 更新 lastPlacedIndex 以及标记 Placement 的 flags
  * @param {*} newFiber  上面刚刚创建的新的 fiber 对象
  * @param {*} lastPlacedIndex 上一次的 lastPlacedIndex，也就是上一次插入的最远位置，初始值是 0
  * @param {*} newIndex 当前的下标，初始值也是 0
  * @param {*} isUpdate // 用于判断 returnFiber 是初次渲染还是更新
- * old >> 1 2 3 4 5
- * new >> 5 1 2 3 4
- * 5 之前的索引为 4，那么我就要记录这个值
- * 通过记录这个值，我能够判断出当前的 fiber 究竟应该是修改还是移动
  */
 export function placeChild(
   newFiber,
@@ -56,6 +52,24 @@ export function placeChild(
     newFiber.flags |= Placement;
     return lastPlacedIndex;
   }
+}
+
+/**
+ * 链接到 Fiber 链表
+ * @param {*} returnFiber 链接的父 Fiber 
+ * @param {*} lastNewFiber 上一个创建的新 Fiber
+ * @param {*} newFiber 新创建的 Fiber
+ */
+export function linkFiber(returnFiber, lastNewFiber, newFiber) {
+  if (lastNewFiber === null) {
+			// newFiber 是第一个子节点
+			returnFiber.child = newFiber;
+		} else {
+			// newFiber 节点不是 returnFiber 的第一个子 fiber
+			lastNewFiber.sibling = newFiber;
+		}
+		// 更新 lastNewFiber
+		lastNewFiber = newFiber;
 }
 
 /**

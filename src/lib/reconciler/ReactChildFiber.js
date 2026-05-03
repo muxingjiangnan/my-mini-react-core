@@ -6,6 +6,7 @@ import {
 	deleteRemainingChildren,
 	mapRemainingChildren,
 	deleteChild,
+  linkFiber,
 } from "./ReactChildFiberAssistant";
 
 /**
@@ -44,70 +45,45 @@ export function reconcileChildren(returnFiber, children) {
 	//      注意: 即使 type + key 相同能复用，仍需要通过 placeChild 判断是否移动位置(标记 flags)。
 	//  5. 清理 Map 中剩余的旧节点，标记为删除，在 commit 阶段统一处理。
 
-	// 1. 第一轮遍历，从左往右遍历新节点（vnode），在遍历的同时比较新旧节点（旧节点是 fiber 对象）
-	// 第一轮遍历，会尝试复用节点
-	// 复用节点意味着你首先得有这些节点，才能说能不能复用的问题
+	// 第一轮遍历，尝试复用节点，得有 oldFiber 
 	for (; oldFiber && i < normalizedChildren.length; i++) {
-		// 第一次是不会进入到这个循环的，因为一开始压根儿没有 oldFiber
-		// 首先拿到当前的 vnode
 		const newChild = normalizedChildren[i];
 		if (newChild === null) continue;
-
-		// 在判断是否能够复用之前，先给 nextOldFiber 赋值
-		// 这里有一种情况
-		// old 一开始是 1 2 3 4 5，进行了一些修改，现在只剩下 5 和 4
-		// old >> 5(4) 4(3)
-		// new >> 4(3) 1 2 3 5(4)
-		// 此时旧的节点的 index 是大于 i，因此需要将 nextOldFiber 暂存为 oldFiber
+		// 如果旧 fiber 的位置超前于当前新节点索引，
+		// 说明新旧节点位置不匹配，需要 break 进入 Map diff。
+		// 但 oldFiber 不能丢失，会在退出第一轮遍历之前被收集。所以用 nextOldFiber 暂存
 		if (oldFiber.index > i) {
-			nextOldFiber = oldFiber;
-			oldFiber = null;
+			nextOldFiber = oldFiber;  // 保留，用于 break 后恢复
+			oldFiber = null;  // 临时置空，强制 sameNode 失败
 		} else {
 			nextOldFiber = oldFiber.sibling;
 		}
 
-		// 接下来下一步，就是判断是否能够复用
+		// 判断是否能够复用
 		const same = sameNode(newChild, oldFiber);
-
 		if (!same) {
-			// 在退出第一轮遍历之前，会做一些额外的工作
 			if (oldFiber === null) {
-				// 需要将 oldFiber 原本的值还原，方便后面使用
+				// 将 oldFiber 原本的值还原
 				oldFiber = nextOldFiber;
 			}
-			// 如果不能复用，那么就跳出循环，第一轮遍历就结束了
+			// 不能复用，跳出循环，第一轮遍历结束
 			break;
 		}
 
-		// 如果没有进入到上面的 if，那么代码走到这里，就说明可以复用
+		// 可以复用
 		const newFiber = createFiber(newChild, returnFiber);
-		// 复用旧 fiber 上面的部分信息，特别是 DOM 节点
 		Object.assign(newFiber, {
 			stateNode: oldFiber.stateNode,
 			alternate: oldFiber,
 			flags: Update,
 		});
 
-		// 更新 lastPlacedIndex 的值
-		lastPlacedIndex = placeChild(
-			newFiber,
-			lastPlacedIndex,
-			i,
-			isUpdate,
-		);
+		// 更新 lastPlacedIndex 以及标记 Placement 的 flags
+		lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, i, isUpdate);
 
-		// 最后，需要将 newFiber 加入到 fiber 链表中去
-		if (lastNewFiber === null) {
-			// 说明你是第一个子节点
-			returnFiber.child = newFiber;
-		} else {
-			// 进入此分支，说明当前生成的 fiber 节点并非父 fiber 的第一个节点
-			lastNewFiber.sibling = newFiber;
-		}
-
-		// 将 lastNewFiber 设置为 newFiber
-		lastNewFiber = newFiber;
-		// oldFiber 存储下一个旧节点信息
+		// 链接到 fiber 链表
+		linkFiber(returnFiber, lastNewFiber, newFiber);
+		// 更新 oldFiber，为下一个新 vnode 节点做准备
 		oldFiber = nextOldFiber;
 	}
 
@@ -135,24 +111,10 @@ export function reconcileChildren(returnFiber, children) {
 			const newFiber = createFiber(newChildVnode, returnFiber);
 
 			// 接下来需要去更新 lastPlacedIndex 这个值
-			lastPlacedIndex = placeChild(
-				newFiber,
-				lastPlacedIndex,
-				i,
-				isUpdate,
-			);
+			lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, i, isUpdate);
 
-			// 接下来非常重要了，接下来要将新生成的 fiber 加入到 fiber 链表里面去
-			if (lastNewFiber === null) {
-				// 说明你是第一个子节点
-				returnFiber.child = newFiber;
-			} else {
-				// 进入此分支，说明当前生成的 fiber 节点并非父 fiber 的第一个节点
-				lastNewFiber.sibling = newFiber;
-			}
-			// 将 lastNewFiber 设置为 newFiber
-			// 从而将当前 fiber 更新为上一个 fiber
-			lastNewFiber = newFiber;
+      // 链接到 fiber 链表
+			linkFiber(returnFiber, lastNewFiber, newFiber);
 		}
 	}
 
@@ -187,23 +149,10 @@ export function reconcileChildren(returnFiber, children) {
 		}
 
 		// 更新 lastPlacedIndex 的值
-		lastPlacedIndex = placeChild(
-			newFiber,
-			lastPlacedIndex,
-			i,
-			isUpdate,
-		);
+		lastPlacedIndex = placeChild(newFiber, lastPlacedIndex, i, isUpdate);
 
-		// 形成链表
-		if (lastNewFiber === null) {
-			// 说明你是第一个子节点
-			returnFiber.child = newFiber;
-		} else {
-			// 进入此分支，说明当前生成的 fiber 节点并非父 fiber 的第一个节点
-			lastNewFiber.sibling = newFiber;
-		}
-		// 不要忘了更新 lastNewFiber
-		lastNewFiber = newFiber;
+		// 链接到 fiber 链表
+    linkFiber(returnFiber, lastNewFiber, newFiber);
 	}
 
 	// 5. 整个新节点遍历完成后，如果 map 中还有剩余的旧节点，这些旧节点也就没有用了，直接删除即可
