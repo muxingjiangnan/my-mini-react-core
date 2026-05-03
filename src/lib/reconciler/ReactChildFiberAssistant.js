@@ -21,7 +21,7 @@ export function sameNode(a, b) {
  * @param {*} newFiber  上面刚刚创建的新的 fiber 对象
  * @param {*} lastPlacedIndex 上一次的 lastPlacedIndex，也就是上一次插入的最远位置，初始值是 0
  * @param {*} newIndex 当前的下标，初始值也是 0
- * @param {*} shouldTrackSideEffects // 用于判断 returnFiber 是初次渲染还是更新
+ * @param {*} isUpdate // 用于判断 returnFiber 是初次渲染还是更新
  * old >> 1 2 3 4 5
  * new >> 5 1 2 3 4
  * 5 之前的索引为 4，那么我就要记录这个值
@@ -31,13 +31,13 @@ export function placeChild(
   newFiber,
   lastPlacedIndex,
   newIndex,
-  shouldTrackSideEffects
+  isUpdate
 ) {
   newFiber.index = newIndex;
 
   const current = newFiber.alternate;
   if (current) {
-    if (!shouldTrackSideEffects) {
+    if (!isUpdate) {
       // 初次渲染不需要移动节点
       return lastPlacedIndex;
     }
@@ -92,12 +92,11 @@ export function deleteRemainingChildren(returnFiber, currentFirstChild) {
 
 /**
  * 将旧的子节点构建到一个 map 结构里面
- * @param {*} currentFirstChild
+ * @param {*} currentFirstChild 剩下的旧 fiber 头节点
  */
 export function mapRemainingChildren(currentFirstChild) {
   // 首先第一步肯定是创建一个 map
   const existingChildren = new Map();
-
   let existingChild = currentFirstChild;
   let index = 0;
 
@@ -106,7 +105,7 @@ export function mapRemainingChildren(currentFirstChild) {
     // 这样可以避免使用 index 导致的错误复用
     const key = existingChild.key || `${existingChild.type}-${index}`;
     existingChildren.set(key, existingChild);
-    // 切换到下一个兄弟节点
+    // 切换到下一个兄弟节点(这里也体现了 React 只对同级别元素进行 diff)
     existingChild = existingChild.sibling;
     index++;
   }
